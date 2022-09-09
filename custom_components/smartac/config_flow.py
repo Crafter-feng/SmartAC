@@ -56,7 +56,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         with open(index_file_path) as j:
             try:
                 ac_index = json.load(j)
-                brands = [brand["brand_name"] for brand in ac_index]
+                brands = {
+                    brand["brand_val"]: brand["brand_name"] for brand in ac_index
+                }
             except Exception:
                 _LOGGER.error("The index Json file is invalid")
                 return self.async_abort(reason="invalid_index")
@@ -64,10 +66,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self.config.update(user_input)
             for brand in ac_index:
-                if brand["brand_name"] == user_input[CONF_BRAND]:
+                if brand["brand_val"] == user_input[CONF_BRAND]:
                     self.devices = {
-                        device["bin"]: device["device_name"]
-                        for device in brand["devices"]
+                        f'irda_{device["remote_map"]}.bin': device["remote_map"] for device in brand["devices"]
                     }
                     break
             return await self.async_step_device()
